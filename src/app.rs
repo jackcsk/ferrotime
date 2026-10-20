@@ -1705,6 +1705,12 @@ impl eframe::App for App {
     fn save(&mut self, storage: &mut dyn eframe::Storage) {
         eframe::set_value(storage, eframe::APP_KEY, &self.settings);
     }
+
+    /// Window background behind unpainted areas (no file open, loading). eframe's default is a
+    /// fixed near-black, which showed as a black pane in the Light skin.
+    fn clear_color(&self, visuals: &egui::Visuals) -> [f32; 4] {
+        visuals.panel_fill.to_normalized_gamma_f32()
+    }
 }
 
 /// Menu button showing `shortcut` on the right.

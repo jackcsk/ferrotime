@@ -4,6 +4,10 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Fixed
+
+- With the Light skin, the main area was black when no file was open or while a file was loading, leaving the "File ▸ Open…" hint barely readable. The window background now follows the selected skin.
+
 ## [0.1.1] - 2026-10-20
 
 ### Changed
