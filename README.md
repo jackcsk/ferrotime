@@ -35,7 +35,28 @@ Ferrotime is a fast viewer for forensic timelines and other large CSV/Excel file
 
 ## Installation
 
-There are no pre-built binaries yet; build from source with Rust **1.95 or newer** ([rustup](https://rustup.rs/)).
+### Pre-built binaries
+
+Download the archive for your platform from the [latest release](https://github.com/jackcsk/ferrotime/releases/latest) and check it against `SHA256SUMS.txt`:
+
+| Platform | Archive |
+|---|---|
+| macOS 11 or newer, Apple Silicon and Intel | `ferrotime-<version>-macos-universal.tar.gz` |
+| Linux x86_64 (glibc 2.35 or newer, e.g. Ubuntu 22.04+) | `ferrotime-<version>-linux-x86_64.tar.gz` |
+| Linux aarch64 (glibc 2.35 or newer) | `ferrotime-<version>-linux-aarch64.tar.gz` |
+
+```sh
+shasum -a 256 -c SHA256SUMS.txt --ignore-missing   # macOS; use sha256sum on Linux
+tar -xzf ferrotime-*-macos-universal.tar.gz
+./ferrotime-*/ferrotime
+```
+
+- **macOS:** the binary is not signed or notarized, so Gatekeeper blocks it the first time. Remove the download quarantine with `xattr -d com.apple.quarantine ferrotime`, or right-click ▸ Open in Finder.
+- **Linux:** the binary needs `libxkbcommon-x11-0` (preinstalled on most desktops). The Open/Save dialogs use the desktop's [XDG Desktop Portal](https://flatpak.github.io/xdg-desktop-portal/) (`xdg-desktop-portal` plus a backend such as `xdg-desktop-portal-gtk` or `-kde`), which standard GNOME and KDE desktops already provide.
+
+### Build from source
+
+Build with Rust **1.95 or newer** ([rustup](https://rustup.rs/)):
 
 ```sh
 git clone https://github.com/jackcsk/ferrotime.git
@@ -44,23 +65,12 @@ cargo build --release
 ./target/release/ferrotime            # or: cargo run --release -- <files…>
 ```
 
-### macOS
-
-Install the Xcode command line tools (`xcode-select --install`). Nothing else is needed.
-
-### Linux
-
-Ferrotime uses X11 or Wayland and renders with Vulkan or OpenGL. On Debian/Ubuntu:
+On macOS, install the Xcode command line tools first (`xcode-select --install`). On Linux, Ferrotime uses X11 or Wayland and renders with Vulkan or OpenGL; on Debian/Ubuntu install:
 
 ```sh
-# build dependencies
 sudo apt install build-essential pkg-config libxkbcommon-dev libwayland-dev \
-  libx11-dev libxcursor-dev libxrandr-dev libxi-dev libgl1-mesa-dev
-# runtime dependency (preinstalled on most desktops)
-sudo apt install libxkbcommon-x11-0
+  libx11-dev libxcursor-dev libxrandr-dev libxi-dev libgl1-mesa-dev libxkbcommon-x11-0
 ```
-
-The Open/Save dialogs use the desktop's [XDG Desktop Portal](https://flatpak.github.io/xdg-desktop-portal/) (`xdg-desktop-portal` plus a backend such as `xdg-desktop-portal-gtk` or `-kde`), which standard GNOME and KDE desktops already provide.
 
 ## Usage
 
