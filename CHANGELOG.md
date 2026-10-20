@@ -4,7 +4,7 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
-## [0.1.0] - 2026-10-19
+## [0.1.0] - 2026-10-20
 
 First public release, with pre-built binaries for macOS (universal: Apple Silicon and Intel) and Linux (x86_64 and aarch64).
 
