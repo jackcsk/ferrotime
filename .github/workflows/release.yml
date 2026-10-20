@@ -112,8 +112,14 @@ jobs:
           security import "$RUNNER_TEMP/certificate.p12" -k "$keychain" -f pkcs12 \
             -P "$MACOS_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
           rm -f "$RUNNER_TEMP/certificate.p12"
+          # The .p12 usually carries Apple's intermediate already; add it only when missing.
           curl -fsSL -o "$RUNNER_TEMP/DeveloperIDG2CA.cer" https://www.apple.com/certificateauthority/DeveloperIDG2CA.cer
-          security import "$RUNNER_TEMP/DeveloperIDG2CA.cer" -k "$keychain" -t cert -f x509
+          if ! out=$(security import "$RUNNER_TEMP/DeveloperIDG2CA.cer" -k "$keychain" -t cert -f x509 2>&1); then
+            case "$out" in
+              *"already exists"*) echo "Developer ID G2 intermediate already present" ;;
+              *) echo "$out" >&2; exit 1 ;;
+            esac
+          fi
           security set-key-partition-list -S apple-tool:,apple: -k "$keychain_password" "$keychain" >/dev/null
           security list-keychains -d user -s "$keychain" $(security list-keychains -d user | tr -d '"')
           identity=$(security find-identity -v -p codesigning "$keychain" \
