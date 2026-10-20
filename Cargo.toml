@@ -1,0 +1,29 @@
+[package]
+name = "ferrotime"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.95"
+description = "Cross-platform timeline analysis for DFIR: a fast CSV/Excel timeline viewer for macOS and Linux, inspired by Eric Zimmerman's Timeline Explorer"
+license = "MIT"
+authors = ["Jack Cheung <jack@jackcheung.com>"]
+repository = "https://github.com/jackcsk/ferrotime"
+readme = "README.md"
+keywords = ["dfir", "forensics", "timeline", "csv", "viewer"]
+categories = ["visualization", "gui"]
+
+[dependencies]
+calamine = "0.37"
+chrono = { version = "0.4.45", default-features = false, features = ["std"] }
+csv = "1.4"
+eframe = { version = "0.37", features = ["persistence"] }
+egui = "0.37"
+encoding_rs = "0.8.42"
+rayon = "1.12.0"
+regex = "1.13.1"
+rfd = "0.17"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.154"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
