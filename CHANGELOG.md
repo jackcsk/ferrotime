@@ -4,6 +4,8 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-10-20
+
 ### Changed
 
 - macOS releases are now a disk image containing **Ferrotime.app**, signed with a Developer ID and notarized by Apple, so Gatekeeper no longer blocks it. This replaces the unsigned `macos-universal.tar.gz` archive.
@@ -22,5 +24,6 @@ First public release, with pre-built binaries for macOS (universal: Apple Silico
 - Cell contents window, copy to clipboard, CSV export of visible or tagged rows, light and dark skins.
 - Ferrotime sessions (`.ferrotime`) and reading/writing Timeline Explorer sessions (`.tle_sess`).
 
-[Unreleased]: https://github.com/jackcsk/ferrotime/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/jackcsk/ferrotime/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/jackcsk/ferrotime/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/jackcsk/ferrotime/releases/tag/v0.1.0

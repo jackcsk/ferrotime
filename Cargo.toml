@@ -1,6 +1,6 @@
 [package]
 name = "ferrotime"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 rust-version = "1.95"
 description = "Cross-platform timeline analysis for DFIR: a fast CSV/Excel timeline viewer for macOS and Linux, inspired by Eric Zimmerman's Timeline Explorer"
