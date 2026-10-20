@@ -4,6 +4,8 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-10-20
+
 ### Fixed
 
 - With the Light skin, the main area was black when no file was open or while a file was loading, leaving the "File ▸ Open…" hint barely readable. The window background now follows the selected skin.
@@ -28,6 +30,7 @@ First public release, with pre-built binaries for macOS (universal: Apple Silico
 - Cell contents window, copy to clipboard, CSV export of visible or tagged rows, light and dark skins.
 - Ferrotime sessions (`.ferrotime`) and reading/writing Timeline Explorer sessions (`.tle_sess`).
 
-[Unreleased]: https://github.com/jackcsk/ferrotime/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/jackcsk/ferrotime/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/jackcsk/ferrotime/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/jackcsk/ferrotime/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/jackcsk/ferrotime/releases/tag/v0.1.0
