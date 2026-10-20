@@ -4,6 +4,10 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Changed
+
+- macOS releases are now a disk image containing **Ferrotime.app**, signed with a Developer ID and notarized by Apple, so Gatekeeper no longer blocks it. This replaces the unsigned `macos-universal.tar.gz` archive.
+
 ## [0.1.0] - 2026-10-20
 
 First public release, with pre-built binaries for macOS (universal: Apple Silicon and Intel) and Linux (x86_64 and aarch64).

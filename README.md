@@ -37,22 +37,22 @@ Ferrotime is a fast viewer for forensic timelines and other large CSV/Excel file
 
 ### Pre-built binaries
 
-Download the archive for your platform from the [latest release](https://github.com/jackcsk/ferrotime/releases/latest) and check it against `SHA256SUMS.txt`:
+Download the file for your platform from the [latest release](https://github.com/jackcsk/ferrotime/releases/latest). `SHA256SUMS.txt` lists their checksums.
 
-| Platform | Archive |
+| Platform | Download |
 |---|---|
-| macOS 11 or newer, Apple Silicon and Intel | `ferrotime-<version>-macos-universal.tar.gz` |
+| macOS 11 or newer, Apple Silicon and Intel | `ferrotime-<version>-macos-universal.dmg` |
 | Linux x86_64 (glibc 2.35 or newer, e.g. Ubuntu 22.04+) | `ferrotime-<version>-linux-x86_64.tar.gz` |
 | Linux aarch64 (glibc 2.35 or newer) | `ferrotime-<version>-linux-aarch64.tar.gz` |
 
+- **macOS:** open the disk image and drag **Ferrotime** to **Applications**. The app is signed with a Developer ID and notarized by Apple, so it opens without a Gatekeeper warning. To use it from the command line, run `/Applications/Ferrotime.app/Contents/MacOS/ferrotime <files…>`.
+- **Linux:** extract the archive and run `./ferrotime`. It needs `libxkbcommon-x11-0` (preinstalled on most desktops). The Open/Save dialogs use the desktop's [XDG Desktop Portal](https://flatpak.github.io/xdg-desktop-portal/) (`xdg-desktop-portal` plus a backend such as `xdg-desktop-portal-gtk` or `-kde`), which standard GNOME and KDE desktops already provide.
+
 ```sh
-shasum -a 256 -c SHA256SUMS.txt --ignore-missing   # macOS; use sha256sum on Linux
-tar -xzf ferrotime-*-macos-universal.tar.gz
+sha256sum -c SHA256SUMS.txt --ignore-missing      # on macOS: shasum -a 256 -c SHA256SUMS.txt --ignore-missing
+tar -xzf ferrotime-*-linux-x86_64.tar.gz
 ./ferrotime-*/ferrotime
 ```
-
-- **macOS:** the binary is not signed or notarized, so Gatekeeper blocks it the first time. Remove the download quarantine with `xattr -d com.apple.quarantine ferrotime`, or right-click ▸ Open in Finder.
-- **Linux:** the binary needs `libxkbcommon-x11-0` (preinstalled on most desktops). The Open/Save dialogs use the desktop's [XDG Desktop Portal](https://flatpak.github.io/xdg-desktop-portal/) (`xdg-desktop-portal` plus a backend such as `xdg-desktop-portal-gtk` or `-kde`), which standard GNOME and KDE desktops already provide.
 
 ### Build from source
 

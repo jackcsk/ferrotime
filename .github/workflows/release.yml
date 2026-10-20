@@ -1,8 +1,15 @@
 name: Release
 
-# Pushing a tag like `v0.1.0` builds the binaries and publishes a GitHub Release.
-# Running it manually (Actions ▸ Release ▸ Run workflow) only builds the archives,
-# as a dry run, without publishing anything.
+# Pushing a tag like `v0.1.0` builds the binaries, signs and notarizes the macOS app, and
+# publishes a GitHub Release. Running it manually (Actions ▸ Release ▸ Run workflow) only
+# builds the archives and an unsigned disk image, as a dry run, without publishing anything.
+#
+# Signing secrets live in the `release` environment, which only version tags can use:
+#   MACOS_CERTIFICATE_P12       base64 of the Developer ID Application identity (.p12)
+#   MACOS_CERTIFICATE_PASSWORD  password of that .p12
+#   APPSTORE_API_KEY_P8         App Store Connect API key (.p8 contents) for notarization
+#   APPSTORE_API_KEY_ID         its Key ID
+#   APPSTORE_API_ISSUER_ID      its Issuer ID
 on:
   push:
     tags: ["v*"]
@@ -18,12 +25,14 @@ jobs:
   build:
     name: ${{ matrix.platform }}
     runs-on: ${{ matrix.runner }}
+    environment: ${{ startsWith(github.ref, 'refs/tags/v') && matrix.signed && 'release' || '' }}
     strategy:
       fail-fast: true
       matrix:
         include:
           - platform: macos-universal
             runner: macos-latest
+            signed: true
           - platform: linux-x86_64
             runner: ubuntu-22.04
           - platform: linux-aarch64
@@ -66,15 +75,76 @@ jobs:
           mkdir -p dist
           cp target/release/ferrotime dist/ferrotime
 
-      - name: Package
+      - name: Read version
         shell: bash
+        run: echo "VERSION=$(sed -n 's/^version = "\(.*\)"$/\1/p' Cargo.toml | head -n 1)" >> "$GITHUB_ENV"
+
+      - name: Package (Linux)
+        if: runner.os == 'Linux'
         run: |
-          version=$(sed -n 's/^version = "\(.*\)"$/\1/p' Cargo.toml | head -n 1)
-          name="ferrotime-${version}-${{ matrix.platform }}"
+          name="ferrotime-${VERSION}-${{ matrix.platform }}"
           mkdir "$name"
           cp dist/ferrotime LICENSE README.md CHANGELOG.md "$name/"
           tar -czf "$name.tar.gz" "$name"
           echo "ARCHIVE=$name.tar.gz" >> "$GITHUB_ENV"
+
+      - name: Import signing certificate (macOS)
+        if: runner.os == 'macOS' && startsWith(github.ref, 'refs/tags/v')
+        env:
+          MACOS_CERTIFICATE_P12: ${{ secrets.MACOS_CERTIFICATE_P12 }}
+          MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+          APPSTORE_API_KEY_P8: ${{ secrets.APPSTORE_API_KEY_P8 }}
+          APPSTORE_API_KEY_ID: ${{ secrets.APPSTORE_API_KEY_ID }}
+          APPSTORE_API_ISSUER_ID: ${{ secrets.APPSTORE_API_ISSUER_ID }}
+        run: |
+          for s in MACOS_CERTIFICATE_P12 MACOS_CERTIFICATE_PASSWORD APPSTORE_API_KEY_P8 APPSTORE_API_KEY_ID APPSTORE_API_ISSUER_ID; do
+            if [ -z "${!s}" ]; then
+              echo "::error::Secret $s is missing from the release environment; releases must be signed and notarized"
+              exit 1
+            fi
+          done
+          keychain="$RUNNER_TEMP/signing.keychain-db"
+          keychain_password=$(openssl rand -hex 24)
+          security create-keychain -p "$keychain_password" "$keychain"
+          security set-keychain-settings -lut 21600 "$keychain"
+          security unlock-keychain -p "$keychain_password" "$keychain"
+          printf '%s' "$MACOS_CERTIFICATE_P12" | base64 --decode > "$RUNNER_TEMP/certificate.p12"
+          security import "$RUNNER_TEMP/certificate.p12" -k "$keychain" -f pkcs12 \
+            -P "$MACOS_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          rm -f "$RUNNER_TEMP/certificate.p12"
+          curl -fsSL -o "$RUNNER_TEMP/DeveloperIDG2CA.cer" https://www.apple.com/certificateauthority/DeveloperIDG2CA.cer
+          security import "$RUNNER_TEMP/DeveloperIDG2CA.cer" -k "$keychain" -t cert -f x509
+          security set-key-partition-list -S apple-tool:,apple: -k "$keychain_password" "$keychain" >/dev/null
+          security list-keychains -d user -s "$keychain" $(security list-keychains -d user | tr -d '"')
+          identity=$(security find-identity -v -p codesigning "$keychain" \
+            | sed -n 's/.*"\(Developer ID Application: [^"]*\)".*/\1/p' | head -n 1)
+          if [ -z "$identity" ]; then
+            echo "::error::No Developer ID Application identity in MACOS_CERTIFICATE_P12"
+            exit 1
+          fi
+          echo "Signing as: $identity"
+          printf '%s' "$APPSTORE_API_KEY_P8" > "$RUNNER_TEMP/notary-key.p8"
+          {
+            echo "SIGN_IDENTITY=$identity"
+            echo "SIGN_KEYCHAIN=$keychain"
+            echo "NOTARY_KEY_PATH=$RUNNER_TEMP/notary-key.p8"
+            echo "NOTARY_KEY_ID=$APPSTORE_API_KEY_ID"
+            echo "NOTARY_ISSUER_ID=$APPSTORE_API_ISSUER_ID"
+          } >> "$GITHUB_ENV"
+
+      - name: Package (macOS app and disk image)
+        if: runner.os == 'macOS'
+        run: |
+          packaging/macos/package.sh dist/ferrotime "$VERSION" .
+          echo "ARCHIVE=ferrotime-${VERSION}-macos-universal.dmg" >> "$GITHUB_ENV"
+
+      - name: Remove signing material
+        if: always() && runner.os == 'macOS'
+        run: |
+          rm -f "$RUNNER_TEMP/notary-key.p8" "$RUNNER_TEMP/certificate.p12"
+          if [ -f "$RUNNER_TEMP/signing.keychain-db" ]; then
+            security delete-keychain "$RUNNER_TEMP/signing.keychain-db"
+          fi
 
       - uses: actions/upload-artifact@v4
         with:
@@ -125,9 +195,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           cd artifacts
-          sha256sum *.tar.gz > SHA256SUMS.txt
+          sha256sum *.tar.gz *.dmg > SHA256SUMS.txt
           cat SHA256SUMS.txt
-          gh release create "$GITHUB_REF_NAME" *.tar.gz SHA256SUMS.txt \
+          gh release create "$GITHUB_REF_NAME" *.tar.gz *.dmg SHA256SUMS.txt \
             --repo "$GITHUB_REPOSITORY" \
             --title "Ferrotime $VERSION" \
             --notes-file ../notes.md \
